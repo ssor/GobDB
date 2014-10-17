@@ -69,3 +69,4 @@ func (f *FilteredEncoder) Encode(e interface{}) ([]byte, error) {
 	return r, nil
 }
 
+
