@@ -1,11 +1,14 @@
 // Implements a persistant key-value store of gob-compatible
 // types. This is accomplished with a light wrapper around 
 // leveldb and Go's gob encoding library.
+//
+// NOTE: this library is not yet goroutine-safe.
 package GobDB
 
 import (
 	"bytes"
 	"github.com/syndtr/goleveldb/leveldb"
+	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
 
@@ -13,7 +16,7 @@ import (
 type DB struct {
 	internal *leveldb.DB
 	location string
-	// essentials *bytes.Buffer
+	essentials *bytes.Buffer
 	encoder FilteredEncoder
 	prepared bool
 }
@@ -101,11 +104,22 @@ func (db *DB) Close() {
 // each initialization, the decoder is literally thrown in the 
 // garbage.
 func (db *DB) prepareEncoder() error {
-	if db.prepared == false {
+	if db.prepared == true {
+		return nil
+	}
 
+
+	iter := db.internal.NewIterator(&util.Range{Start: []byte("prep:"), Limit: []byte("prep::")}, nil)
+	for iter.Next() {
+		value := iter.Value()
+		db.encoder.Encode(value)
+	}
+	iter.Release()
+	err := iter.Error()
+	if err == nil {
 		db.prepared = true
 	}
-	return nil
+	return err
 }
 
 

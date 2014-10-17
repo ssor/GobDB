@@ -10,6 +10,9 @@ import (
 // Wraps gob.Encoder in such a way to retain all of gobs internal
 // type definitions, and to return byte slices of type-value
 // pairs without any additional data.
+//
+// Returns bytes of encoded objects, writes only type definitions
+// and uniquely-typed objects (i.e. one object of each type).
 type FilteredEncoder struct {
 	essentials []interface{}
 	encoder *gob.Encoder
