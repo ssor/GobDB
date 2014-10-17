@@ -1,7 +1,6 @@
 package GobDB
 
 import (
-	"io"
 	"bytes"
 	"encoding/gob"
 )
@@ -14,45 +13,27 @@ import (
 // Returns bytes of encoded objects, writes only type definitions
 // and uniquely-typed objects (i.e. one object of each type).
 type FilteredEncoder struct {
-	essentials []interface{}
 	encoder *gob.Encoder
 	buffer *bytes.Buffer
-	writer io.Writer
-}
-
-
-// Constructs filter with an empty buffer and unused encoder. Only
-// data essential to the construction of new encodes are kept. This
-// consists of internal gob type definitions and one object of each
-// type.
-func MakeFilteredEncoder(w io.Writer) FilteredEncoder {
-	var r FilteredEncoder
-	r.writer = w // where essential data is outputted
-	r.buffer = bytes.NewBuffer([]byte{}) // buffer for temporary use
-	r.encoder = gob.NewEncoder(r.buffer) // wrapped gob encoder
-	return r
 }
 
 
 
-
-
-
-func (f *FilteredEncoder) Encode(e interface{}) ([]byte, error) {	
-	// Empty write buffer.
-	f.buffer.Reset()
+func (f *FilteredEncoder) Encode(e interface{}) ([]byte, []byte, error) {	
+	// Empty write buffer and ensure that an encoder is present.
+	f.ready()
 
 	// Encode value and its size.
 	err := f.encoder.Encode(e)
 	if err != nil {
-		return []byte{}, err
+		return []byte{}, []byte{}, err
 	}
 	s1 := f.buffer.Len()
 
 	// Repeat.
 	err = f.encoder.Encode(e)
 	if err != nil {
-		return []byte{}, err
+		return []byte{}, []byte{}, err
 	}
 	s2 := f.buffer.Len() - s1
 
@@ -61,12 +42,16 @@ func (f *FilteredEncoder) Encode(e interface{}) ([]byte, error) {
 	// encoded beforehand. Otherwise, we know that the parameter to
 	// this function call is the first of its type to be encoded 
 	// through this filter.
-	r := make([]byte, s2)
-	copy(r, f.buffer.Bytes()[s1:])
-	if s1 != s2 {
-		f.writer.Write(f.buffer.Bytes())
-	}
-	return r, nil
+	r := make([]byte, s1 + s2)
+	copy(r, f.buffer.Bytes())
+	return r[:s1 - s2], r[s1:], nil
 }
 
+
+func (f *FilteredEncoder) ready() {
+	if f.encoder == nil {
+		f.buffer = bytes.NewBuffer([]byte{})
+		f.encoder = gob.NewEncoder(f.buffer)
+	}
+}
 
