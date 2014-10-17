@@ -3,7 +3,7 @@ GobDB is a simple database optimized for convenience in Golang. It wraps [leveld
 
 
 
-# Sample Code
+# Example
 // TODO
 
 
