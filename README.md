@@ -1,5 +1,5 @@
 # Overview
-GobDB is a simple database optimized for convenience in Go. It wraps [leveldb](https://github.com/basho/leveldb) to provide persistant key-value storage of [gob](http://golang.org/pkg/encoding/gob/)-compatible types.
+GobDB is a simple database optimized for convenience in Go. It wraps [leveldb](https://github.com/syndtr/goleveldb) to provide persistant key-value storage of [gob](http://golang.org/pkg/encoding/gob/)-compatible types.
 
 
 
