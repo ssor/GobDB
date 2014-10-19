@@ -4,7 +4,30 @@ GobDB is a simple database optimized for convenience in Golang. It wraps [leveld
 
 
 # Example
-// TODO
+Set up a database and assign it a local data file.
+```
+db := GobDB.At("example")
+db.Open()
+```
+
+Insert persistantly-stored key-value pairs. We use strings
+here, but all gob-compatible values are supported.
+```
+db.Put("name", "adam")
+```
+
+Fetch values of key-value pairs. Note that you must provide
+a pointer of the correct type. 
+```
+var value string
+db.Get(name, &value)
+```
+
+Check if keys are contained within the database.
+```
+db.Has("name") // => true
+db.Has("3234") // => false
+```
 
 
 

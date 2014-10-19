@@ -96,9 +96,9 @@ func (db *DB) Get(key, value interface{}) error {
 }
 
 
-// // Encodes given key via gob and checks if the resulting byte 
-// // slice exists in the database's internal leveldb.
-func (db DB) Contains(key interface{}) bool {
+// Encodes given key via gob and checks if the resulting byte 
+// slice exists in the database's internal leveldb.
+func (db DB) Has(key interface{}) bool {
 	// Encode key via gob, registering its type if necessary.
 	obj, err := db.encode(key)
 	if err != nil {
@@ -123,6 +123,8 @@ func (db *DB) Delete(key interface{}) error {
 	// Delete!
 	return db.internal.Delete(obj, nil)
 }
+
+
 
 
 // Encodes given key via gob, registers its type if necessary,
