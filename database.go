@@ -80,8 +80,8 @@ func (db *DB) Put(key, value interface{}) error {
 }
 
 
-// // Encodes given key via gob, fetches the corresponding value from
-// // within leveldb, and decodes that value into parameter two.
+// Encodes given key via gob, fetches the corresponding value from
+// within leveldb, and decodes that value into parameter two.
 func (db *DB) Get(key, value interface{}) error {
 	// Encode key via gob, registering its type if necessary.
 	obj, err := db.encode(key)
@@ -119,8 +119,8 @@ func (db DB) Has(key interface{}) bool {
 }
 
 
-// // Encodes given key via gob, deleting the resulting byte slice 
-// // from the database's internal leveldb.
+// Encodes given key via gob, deleting the resulting byte slice 
+// from the database's internal leveldb.
 func (db *DB) Delete(key interface{}) error {
 	// Encode key via gob, registering its type if necessary.
 	obj, err := db.encode(key)
@@ -130,6 +130,18 @@ func (db *DB) Delete(key interface{}) error {
 
 	// Delete!
 	return db.internal.Delete(obj, nil)
+}
+
+
+// Counts key-value pairs in database.
+func (db *DB) Entries() int {
+	i := 0
+	iter := db.internal.NewIterator(util.BytesPrefix([]byte("key:")) , nil)
+	for iter.Next() {
+		i += 1
+	}
+	iter.Release()
+	return i
 }
 
 
@@ -149,11 +161,20 @@ func (db *DB) encode(key interface{}) ([]byte, error) {
 		return []byte{}, err
 	}
 
+	// Register key with decoder.
+	db.decoder.Register(append(def, obj...))
+
+
 	// Register key type.
 	err = db.registerType(def, obj)
 	if err != nil {
 		return []byte{}, err
 	}
+
+	// err = db.decoder.Decode(append(def, obj...), nil)
+	// if err != nil {
+	// 	return []byte{}, err
+	// }
 
 	return obj, nil
 }
@@ -173,7 +194,6 @@ func (db *DB) prepare() error {
 	if db.prepared == true {
 		return nil
 	}
-
 
 	iter := db.internal.NewIterator(util.BytesPrefix([]byte("prep#")) , nil)
 	for iter.Next() {
@@ -247,11 +267,10 @@ func (db *DB) registerType(def, obj []byte) error {
 		return err
 	}
 
-	// Stop if type is already registered.
+	// Stop if type is already registered in database.
 	if db.isPresent(def) {
 		return nil
 	}
-
 
 	// Map prep#<n> to type definition bytes.
 	k1 := []byte("prep#" + strconv.Itoa(db.prepCount()))
@@ -266,7 +285,6 @@ func (db *DB) registerType(def, obj []byte) error {
 	if err != nil {
 		return err
 	}
-
 
 	// Map prep:<def> to empty string (for checking duplicate keys).
 	k2 := []byte("prep:")

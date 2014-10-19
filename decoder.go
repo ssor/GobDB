@@ -43,8 +43,7 @@ func (d *Decoder) Register(data []byte) error {
 	defer d.mutex.Unlock()
 
 	d.reader.buffer(data)
-	d.decoder.Decode(nil)
-	return nil
+	return d.decoder.Decode(nil)
 }
 
 
