@@ -145,6 +145,14 @@ func (db *DB) Entries() int {
 }
 
 
+// Erases caches and closes leveldb. This way, the db is forced
+// to reload gobbed values as though it had just been opened for
+// the first time.
+func (db *DB) Reset() error {
+	db.Close()
+	db.prepared = false
+}
+
 
 
 // Encodes given key via gob, registers its type if necessary,
