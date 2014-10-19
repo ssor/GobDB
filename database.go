@@ -35,7 +35,7 @@ func (db *DB) Open() error {
 	ret, err := leveldb.OpenFile(db.location, nil)
 	if err == nil {
 		db.internal = ret
-		db.prepareEncoder()
+		db.prepare()
 	}
 	return err
 }
@@ -159,16 +159,17 @@ func (db *DB) encode(key interface{}) ([]byte, error) {
 // methods instead of initializing new DB objects all the time. For 
 // each initialization, the decoder is literally thrown in the 
 // garbage.
-func (db *DB) prepareEncoder() error {
+func (db *DB) prepare() error {
 	if db.prepared == true {
 		return nil
 	}
 
 
-	iter := db.internal.NewIterator(&util.Range{Start: []byte("prep:"), Limit: []byte("prep::")}, nil)
+	iter := db.internal.NewIterator(util.BytesPrefix([]byte("prep#")) , nil)
 	for iter.Next() {
 		value := iter.Value()
 		db.encoder.Encode(value)
+		db.decoder.Register(value)
 	}
 	iter.Release()
 	err := iter.Error()
@@ -179,30 +180,30 @@ func (db *DB) prepareEncoder() error {
 }
 
 
-func (db *DB) setPrepSize(value int) error {
-	key := []byte("nprep")
+func (db *DB) setPrepCount(value int) error {
+	key := []byte("prep-count")
 	data := []byte(strconv.Itoa(value))
 	return db.internal.Put(key, data, nil)
 }
 
 
-func (db *DB) incPrepSize() error {
-	size := db.prepSize()
+func (db *DB) incPrepCount(i int) error {
+	size := db.prepCount()
 	if size == -1 {
-		return db.setPrepSize(1)
+		return db.setPrepCount(1)
 	} else {
-		return db.setPrepSize(size + 1)
+		return db.setPrepCount(size + i)
 	}
 }
 
 
-func (db *DB) prepSize() int {
+func (db *DB) prepCount() int {
 	err := db.Open()
 	if err != nil {
 		return -1
 	}
 
-	val, err := db.internal.Get([]byte("nprep"), nil)
+	val, err := db.internal.Get([]byte("prep-count"), nil)
 	if err != nil {
 		return 0
 	}
@@ -211,37 +212,62 @@ func (db *DB) prepSize() int {
 }
 
 
+// Checks if definition is present in current db.
+func (db *DB) isPresent(def []byte) bool {
+	err := db.Open()
+	if err != nil {
+		return false
+	}
 
-func (db *DB) typeIndex(def, obj []byte) int {
-	key := []byte("type:")
+
+	key := []byte("prep:")
 	key = append(key, def...)
-	key = append(key, obj...)
-	value, err := db.internal.Get(key, nil)
-	if err != nil {
-		return -1
-	}
-	
-	n, err := strconv.Atoi(string(value))
-	if err != nil {
-		return -1
-	}
-	return n
+	_, err = db.internal.Get(key, nil)
+	return err == nil
 }
 
 
 
+// If not done already, registers type and example object in both
+// the encoder and decoder.
 func (db *DB) registerType(def, obj []byte) error {
-	// i := db.typeIndex(def, obj)
-	// if i == -1 {
-	// 	val := []byte(strconv.Itoa(db.prepSize()))
-	// 	key := typeKey(def, obj)
-	// 	err := db.internal.Put(key, val)
-	// 	if err != nil {
-	// 		return err
-	// 	} 
-	// 	db.incPrepSize()
-	// }
-	// return nil
+	// Ensure that database is open.
+	err := db.Open()
+	if err != nil {
+		return err
+	}
+
+	// Stop if type is already registered.
+	if db.isPresent(def) {
+		return nil
+	}
+
+
+	// Map prep#<n> to type definition bytes.
+	k1 := []byte("prep#" + strconv.Itoa(db.prepCount()))
+	err = db.incPrepCount(1)
+	if err != nil {
+		return err
+	}
+	v1 := []byte{}
+	v1 = append(v1, def...)
+	v1 = append(v1, obj...)
+	err = db.internal.Put(k1, v1, nil)
+	if err != nil {
+		return err
+	}
+
+
+	// Map prep:<def> to empty string (for checking duplicate keys).
+	k2 := []byte("prep:")
+	k2 = append(k2, def...)
+	v2 := []byte("")
+	err = db.internal.Put(k2, v2, nil)
+	if err != nil {
+		db.internal.Delete(k1, nil)
+		db.incPrepCount(-1)
+		return err
+	}
 	return nil
 }
 
