@@ -1,13 +1,12 @@
 package GobDB
 
 import (
+	"fmt"
+	"io/ioutil"
+	"os"
 	"testing"
-    "os"
-    "fmt"
-    "io/ioutil"
-    // "path/filepath"
-  )
-
+	// "path/filepath"
+)
 
 func TestBasic(t *testing.T) {
 	// Make a database file.
@@ -16,7 +15,6 @@ func TestBasic(t *testing.T) {
 		t.FailNow()
 	}
 	defer os.Remove(path)
-
 
 	// Make a database using that file.
 	db := At(path)
@@ -27,7 +25,6 @@ func TestBasic(t *testing.T) {
 	}
 	defer db.Close()
 
-
 	// Map a key to a value.
 	key := "name"
 	val := "adam"
@@ -36,11 +33,9 @@ func TestBasic(t *testing.T) {
 		t.FailNow()
 	}
 
-
 	// Write, close, and reopen database (to check for persistance).
 	db.Close()
 	db.Open()
-
 
 	// Fetch value from key.
 	var out string
@@ -49,22 +44,19 @@ func TestBasic(t *testing.T) {
 		t.FailNow()
 	}
 
-
 	// Check!
 	if out != val {
 		t.FailNow()
 	}
 }
 
-
 func TestPersistence(t *testing.T) {
-		// Make a database file.
+	// Make a database file.
 	path, err := ioutil.TempDir("", "temp")
 	if err != nil {
 		t.FailNow()
 	}
 	defer os.Remove(path)
-
 
 	// Make a database using that file.
 	db1 := At(path)
@@ -74,7 +66,6 @@ func TestPersistence(t *testing.T) {
 		t.FailNow()
 	}
 
-
 	// Map a key to a value.
 	key := "name"
 	val := "adam"
@@ -83,11 +74,9 @@ func TestPersistence(t *testing.T) {
 		t.FailNow()
 	}
 
-
 	// Write, close, and reopen database (to check for persistance).
 	db1.Close()
 	db1.Open()
-
 
 	// Fetch value from key.
 	var out string
@@ -103,9 +92,7 @@ func TestPersistence(t *testing.T) {
 
 	db1.Close()
 
-
-
-	for i := 1;  i<=5; i++ {
+	for i := 1; i <= 5; i++ {
 		// Make new db with same data file.
 		db2 := At(path)
 		db2.Open()
@@ -125,13 +112,10 @@ func TestPersistence(t *testing.T) {
 	}
 }
 
-
-
 type ExampleThing struct {
 	Name string
-	Age uint
+	Age  uint
 }
-
 
 func TestStructs(t *testing.T) {
 	// Make a database file.
@@ -140,7 +124,6 @@ func TestStructs(t *testing.T) {
 		t.FailNow()
 	}
 	defer os.Remove(path)
-
 
 	// Make a database using that file.
 	db := At(path)
@@ -151,7 +134,6 @@ func TestStructs(t *testing.T) {
 	}
 	defer db.Close()
 
-
 	// Map a key to a value.
 	key := ExampleThing{Name: "key", Age: 5}
 	val := ExampleThing{Name: "val", Age: 7}
@@ -161,11 +143,9 @@ func TestStructs(t *testing.T) {
 		t.FailNow()
 	}
 
-
 	// Write, close, and reopen database (to check for persistance).
 	db.Close()
 	db.Open()
-
 
 	// Fetch value from key.
 	var out ExampleThing
@@ -174,7 +154,6 @@ func TestStructs(t *testing.T) {
 		fmt.Println("GET:", err)
 		t.FailNow()
 	}
-
 
 	// Check!
 	if out != val {

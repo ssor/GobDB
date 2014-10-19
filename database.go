@@ -1,30 +1,27 @@
 // Implements a persistant key-value store of gob-compatible
-// types. This is accomplished with a light wrapper around 
+// types. This is accomplished with a light wrapper around
 // leveldb and Go's gob encoding library.
 package GobDB
 
 import (
-	"strconv"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/util"
+	"strconv"
 )
-
 
 // LevelDB wrapper.
 type DB struct {
 	internal *leveldb.DB
 	location string
-	encoder FilteredEncoder
-	decoder Decoder
+	encoder  FilteredEncoder
+	decoder  Decoder
 	prepared bool
 }
 
-
 // Returns unopened database at with given datafile.
 func At(path string) *DB {
-	return &DB {location: path}
+	return &DB{location: path}
 }
-
 
 // Opens database if not done already.
 func (db *DB) Open() error {
@@ -40,12 +37,10 @@ func (db *DB) Open() error {
 	return err
 }
 
-
-// 
+//
 func (db DB) IsOpen() bool {
 	return db.internal != nil
 }
-
 
 // Closes database if not done already.
 func (db *DB) Close() {
@@ -54,7 +49,6 @@ func (db *DB) Close() {
 		db.internal = nil
 	}
 }
-
 
 // Encodes given key and value through gob, inserting resulting
 // byte slices into the database's internal leveldb.
@@ -79,7 +73,6 @@ func (db *DB) Put(key, value interface{}) error {
 	return db.internal.Put(pkey, val, nil)
 }
 
-
 // Encodes given key via gob, fetches the corresponding value from
 // within leveldb, and decodes that value into parameter two.
 func (db *DB) Get(key, value interface{}) error {
@@ -103,8 +96,7 @@ func (db *DB) Get(key, value interface{}) error {
 	return db.decoder.Decode(val, value)
 }
 
-
-// Encodes given key via gob and checks if the resulting byte 
+// Encodes given key via gob and checks if the resulting byte
 // slice exists in the database's internal leveldb.
 func (db DB) Has(key interface{}) bool {
 	// Encode key via gob, registering its type if necessary.
@@ -118,8 +110,7 @@ func (db DB) Has(key interface{}) bool {
 	return err == nil
 }
 
-
-// Encodes given key via gob, deleting the resulting byte slice 
+// Encodes given key via gob, deleting the resulting byte slice
 // from the database's internal leveldb.
 func (db *DB) Delete(key interface{}) error {
 	// Encode key via gob, registering its type if necessary.
@@ -132,18 +123,16 @@ func (db *DB) Delete(key interface{}) error {
 	return db.internal.Delete(obj, nil)
 }
 
-
 // Counts key-value pairs in database.
 func (db *DB) Entries() int {
 	i := 0
-	iter := db.internal.NewIterator(util.BytesPrefix([]byte("key:")) , nil)
+	iter := db.internal.NewIterator(util.BytesPrefix([]byte("key:")), nil)
 	for iter.Next() {
 		i += 1
 	}
 	iter.Release()
 	return i
 }
-
 
 // Erases caches and closes leveldb. This way, the db is forced
 // to reload gobbed values as though it had just been opened for
@@ -152,8 +141,6 @@ func (db *DB) Reset() {
 	db.Close()
 	db.prepared = false
 }
-
-
 
 // Encodes given key via gob, registers its type if necessary,
 // and routes any errors outward.
@@ -172,7 +159,6 @@ func (db *DB) encode(key interface{}) ([]byte, error) {
 	// Register key with decoder.
 	db.decoder.Register(append(def, obj...))
 
-
 	// Register key type.
 	err = db.registerType(def, obj)
 	if err != nil {
@@ -187,23 +173,21 @@ func (db *DB) encode(key interface{}) ([]byte, error) {
 	return obj, nil
 }
 
-
-
 // When the database is opened for the first time, scrolls through
-// all entries to form the same encoder that was used before the 
+// all entries to form the same encoder that was used before the
 // previous db.Close() call.
 //
 // Note that this is an expensive operation, scaling linearly with
 // dataset size. Accordingly, you should utilize the open and close
-// methods instead of initializing new DB objects all the time. For 
-// each initialization, the decoder is literally thrown in the 
+// methods instead of initializing new DB objects all the time. For
+// each initialization, the decoder is literally thrown in the
 // garbage.
 func (db *DB) prepare() error {
 	if db.prepared == true {
 		return nil
 	}
 
-	iter := db.internal.NewIterator(util.BytesPrefix([]byte("prep#")) , nil)
+	iter := db.internal.NewIterator(util.BytesPrefix([]byte("prep#")), nil)
 	for iter.Next() {
 		value := iter.Value()
 		db.encoder.Encode(value)
@@ -217,13 +201,11 @@ func (db *DB) prepare() error {
 	return err
 }
 
-
 func (db *DB) setPrepCount(value int) error {
 	key := []byte("prep-count")
 	data := []byte(strconv.Itoa(value))
 	return db.internal.Put(key, data, nil)
 }
-
 
 func (db *DB) incPrepCount(i int) error {
 	size := db.prepCount()
@@ -233,7 +215,6 @@ func (db *DB) incPrepCount(i int) error {
 		return db.setPrepCount(size + i)
 	}
 }
-
 
 func (db *DB) prepCount() int {
 	err := db.Open()
@@ -249,7 +230,6 @@ func (db *DB) prepCount() int {
 	return n
 }
 
-
 // Checks if definition is present in current db.
 func (db *DB) isPresent(def []byte) bool {
 	err := db.Open()
@@ -257,14 +237,11 @@ func (db *DB) isPresent(def []byte) bool {
 		return false
 	}
 
-
 	key := []byte("prep:")
 	key = append(key, def...)
 	_, err = db.internal.Get(key, nil)
 	return err == nil
 }
-
-
 
 // If not done already, registers type and example object in both
 // the encoder and decoder.
@@ -306,5 +283,3 @@ func (db *DB) registerType(def, obj []byte) error {
 	}
 	return nil
 }
-
-

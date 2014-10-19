@@ -1,12 +1,11 @@
 package GobDB
 
 import (
-	"os"
-	"fmt"
-	"sync"
 	"encoding/gob"
+	"fmt"
+	"os"
+	"sync"
 )
-
 
 // Provides a goroutine-safe method of decoding gobbed objects
 // individually. Assumes that gob type definitions are registered
@@ -21,7 +20,6 @@ type Decoder struct {
 	mutex   sync.Mutex
 }
 
-
 // Attempts to decode the given data, placing results into <address>
 // if no errors occur. New types are registered implicitly, but they
 // must be used in correct order.
@@ -34,7 +32,6 @@ func (d *Decoder) Decode(data []byte, address interface{}) error {
 	return d.decoder.Decode(address)
 }
 
-
 // Informs internal decoder of the given gob type definition and its
 // example object.
 func (d *Decoder) Register(data []byte) error {
@@ -46,7 +43,6 @@ func (d *Decoder) Register(data []byte) error {
 	return d.decoder.Decode(nil)
 }
 
-
 // Makes sure that a gob decoder has been set up with the correct
 // reader.
 func (d *Decoder) ensureInitialized() {
@@ -57,18 +53,15 @@ func (d *Decoder) ensureInitialized() {
 	}
 }
 
-
 // Helper to access the gob decoders internal reader.
 type hookedReader struct {
 	data *[]byte
 }
 
-
 // Allocates memory for shared slice.
 func makeAtomicReader() hookedReader {
-	return hookedReader {data: &[]byte{}}
+	return hookedReader{data: &[]byte{}}
 }
-
 
 // Implementing the reader interface for gob.decoder...
 func (r hookedReader) Read(data []byte) (int, error) {
@@ -76,7 +69,6 @@ func (r hookedReader) Read(data []byte) (int, error) {
 		fmt.Println(" - ERROR: called decode before buffer.")
 		os.Exit(1)
 	}
-
 
 	n := copy(data, *r.data)
 	if n == len(*r.data) {
@@ -86,7 +78,6 @@ func (r hookedReader) Read(data []byte) (int, error) {
 	}
 	return n, nil
 }
-
 
 // Replaces data in buffer. This should replace data in the gob
 // decoders buffer too.
