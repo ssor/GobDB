@@ -34,4 +34,5 @@ func main() {
 # Installation
 ```
 go get github.com/dasmithii/GobDB
+go test github.com/dasmithii/GobDB
 ```
