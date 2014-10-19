@@ -18,7 +18,11 @@ type FilteredEncoder struct {
 }
 
 
-
+// Encodes given value twice via gob, compares the two encodings to
+// deduce whether or not the value had been encoded before. If it has
+// the gob type definition is returned in position one. Regardless,
+// the actual encoded value (without typedef bytes) is returned in
+// position two.
 func (f *FilteredEncoder) Encode(e interface{}) ([]byte, []byte, error) {	
 	// Empty write buffer and ensure that an encoder is present.
 	f.ready()
@@ -48,6 +52,7 @@ func (f *FilteredEncoder) Encode(e interface{}) ([]byte, []byte, error) {
 }
 
 
+// Initializes encoder if not yet initialized.
 func (f *FilteredEncoder) ready() {
 	if f.encoder == nil {
 		f.buffer = bytes.NewBuffer([]byte{})
