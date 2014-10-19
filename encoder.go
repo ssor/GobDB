@@ -57,6 +57,8 @@ func (f *FilteredEncoder) ready() {
 	if f.encoder == nil {
 		f.buffer = bytes.NewBuffer([]byte{})
 		f.encoder = gob.NewEncoder(f.buffer)
+	} else {
+		f.buffer.Reset()
 	}
 }
 

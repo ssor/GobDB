@@ -57,76 +57,73 @@ func TestBasic(t *testing.T) {
 }
 
 
-// func TestPersistence(t *testing.T) {
-// 		// Make a database file.
-// 	path, err := ioutil.TempDir("", "temp")
-// 	if err != nil {
-// 		t.FailNow()
-// 	}
-// 	defer os.Remove(path)
+func TestPersistence(t *testing.T) {
+		// Make a database file.
+	path, err := ioutil.TempDir("", "temp")
+	if err != nil {
+		t.FailNow()
+	}
+	defer os.Remove(path)
 
 
-// 	// Make a database using that file.
-// 	db1 := At(path)
-// 	err = db1.Open()
-// 	if err != nil {
-// 		fmt.Println(err)
-// 		t.FailNow()
-// 	}
+	// Make a database using that file.
+	db1 := At(path)
+	err = db1.Open()
+	if err != nil {
+		fmt.Println(err)
+		t.FailNow()
+	}
 
 
-// 	// Map a key to a value.
-// 	key := "name"
-// 	val := "adam"
-// 	err = db1.Put(key, val)
-// 	if err != nil {
-// 		t.FailNow()
-// 	}
+	// Map a key to a value.
+	key := "name"
+	val := "adam"
+	err = db1.Put(key, val)
+	if err != nil {
+		t.FailNow()
+	}
 
 
-// 	// Write, close, and reopen database (to check for persistance).
-// 	db1.Close()
-// 	db1.Open()
+	// Write, close, and reopen database (to check for persistance).
+	db1.Close()
+	db1.Open()
 
 
-// 	// Fetch value from key.
-// 	var out string
-// 	err = db1.Get(key, &out)
-// 	if err != nil {
-// 		t.FailNow()
-// 	}
+	// Fetch value from key.
+	var out string
+	err = db1.Get(key, &out)
+	if err != nil {
+		t.FailNow()
+	}
 
-// 	// Check!
-// 	if out != val {
-// 		t.FailNow()
-// 	}
+	// Check!
+	if out != val {
+		t.FailNow()
+	}
 
-// 	db1.Close()
+	db1.Close()
 
 
 
-// 	for i := 1;  i<=5; i++ {
-// 		fmt.Println(" - n:", i)
-// 		// Make new db with same data file.
-// 		db2 := At(path)
-// 		db2.Open()
+	for i := 1;  i<=5; i++ {
+		// Make new db with same data file.
+		db2 := At(path)
+		db2.Open()
 
-// 		out = ""
-// 		err = db2.Get(key, &out)
-// 		if err != nil {
-// 			fmt.Println("ONE:", err)
-// 			t.FailNow()
-// 		}
+		out = ""
+		err = db2.Get(key, &out)
+		if err != nil {
+			t.FailNow()
+		}
 
-// 		// Check!
-// 		if out != val {
-// 			fmt.Println("TWO")
-// 			t.FailNow()
-// 		}
+		// Check!
+		if out != val {
+			t.FailNow()
+		}
 
-// 		db2.Close()
-// 	}
-// }
+		db2.Close()
+	}
+}
 
 
 
