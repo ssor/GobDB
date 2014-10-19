@@ -20,8 +20,8 @@ func main() {
 
 	// Fetch values of key-value pairs. Note that you must provide
 	// a pointer of the correct type. 
-	var value string
-	db.Get(name, &value)
+	var value string = ""
+	db.Get("name", &value)
 
 	// Check if keys are contained within the database.
 	db.Has("name") // => true

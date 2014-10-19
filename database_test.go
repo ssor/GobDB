@@ -9,7 +9,7 @@ import (
   )
 
 
-func TestAll(t *testing.T) {
+func TestBasic(t *testing.T) {
 	// Make a database file.
 	path, err := ioutil.TempDir("", "temp")
 	if err != nil {
@@ -54,3 +54,7 @@ func TestAll(t *testing.T) {
 		t.FailNow()
 	}
 }
+
+
+
+// func TestStructs(t *testing.T) {}
