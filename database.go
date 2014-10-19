@@ -148,7 +148,7 @@ func (db *DB) Entries() int {
 // Erases caches and closes leveldb. This way, the db is forced
 // to reload gobbed values as though it had just been opened for
 // the first time.
-func (db *DB) Reset() error {
+func (db *DB) Reset() {
 	db.Close()
 	db.prepared = false
 }
