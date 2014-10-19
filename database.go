@@ -65,14 +65,18 @@ func (db *DB) Put(key, value interface{}) error {
 		return err
 	}
 
+	// Form prefixed key.
+	pkey := []byte("key:")
+	pkey = append(pkey, o1...)
+
 	// Encode value via gob, registering types if necessary.
-	o2, err := db.encode(value)
+	val, err := db.encode(value)
 	if err != nil {
 		return err
 	}
 
 	// Insert gobbed values into leveldb.
-	return db.internal.Put(o1, o2, nil)
+	return db.internal.Put(pkey, val, nil)
 }
 
 
@@ -85,8 +89,12 @@ func (db *DB) Get(key, value interface{}) error {
 		return err
 	}
 
-	// Fetch gob-encoded values.
-	val, err := db.internal.Get(obj, nil)
+	// Form prefixed key.
+	pkey := []byte("key:")
+	pkey = append(pkey, obj...)
+
+	// Fetch gob-encoded value.
+	val, err := db.internal.Get(pkey, nil)
 	if err != nil {
 		return err
 	}
