@@ -14,7 +14,7 @@ func main() {
 	db.Open()
 	defer db.Close()
 
-	// Insert persistantly-stored key-value pairs. We use strings
+	// Insert persistently-stored key-value pairs. We use strings
 	// here, but all gob-compatible values are supported.
 	db.Put("name", "adam")
 
@@ -23,7 +23,7 @@ func main() {
 	var value string
 	db.Get(name, &value)
 
-	Check if keys are contained within the database.
+	// Check if keys are contained within the database.
 	db.Has("name") // => true
 	db.Has("3234") // => false
 }
