@@ -131,7 +131,8 @@ func (db *DB) Delete(key interface{}) error {
 	return db.internal.Delete(kbytes, nil)
 }
 
-// Entries counts key-value pairs in the database.
+// Entries counts key-value pairs in the database. This 
+// includes only pairs written through GobDB.Put.
 func (db *DB) Entries() int {
 	i := 0
 	iter := db.internal.NewIterator(util.BytesPrefix([]byte("GobDB:key:")), nil)
@@ -148,6 +149,24 @@ func (db *DB) Entries() int {
 func (db *DB) Reset() {
 	db.Close()
 	db.prepared = false
+}
+
+// Internal opens and fetches the underlying leveldb. Clients 
+// may use this to perform direct writing of byte slices, or 
+// to access leveldb APIs left out of this wrapper.
+//
+// Note: GobDB stores its mappings in the prefix "GobDB:", so
+// that prefix should be avoided.
+//
+// Note: closing the parent GobDB will invalidate the returned
+// value of this function.
+func (db *DB) Internal() *leveldb.DB {
+	err := db.Open()
+	if err != nil {
+		return nil
+	}
+
+	return db.internal
 }
 
 // Encodes given key via gob, registers its type if necessary,
