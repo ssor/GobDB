@@ -5,9 +5,9 @@ import (
 	"encoding/gob"
 )
 
-// Wraps gob.Encoder in such a way to retain all of gobs internal
-// type definitions, and to return byte slices of type-value
-// pairs without any additional data.
+// FilteredEncoder wraps gob.Encoder in such a way to retain
+// all of gobs internal  type definitions, and to return byte
+// slices of type-value pairs without any additional data.
 //
 // Returns bytes of encoded objects, writes only type definitions
 // and uniquely-typed objects (i.e. one object of each type).
@@ -16,11 +16,11 @@ type FilteredEncoder struct {
 	buffer  *bytes.Buffer
 }
 
-// Encodes given value twice via gob, compares the two encodings to
-// deduce whether or not the value had been encoded before. If it has
-// the gob type definition is returned in position one. Regardless,
-// the actual encoded value (without typedef bytes) is returned in
-// position two.
+// Encode performs gob.Encode twice, compares the two encodings
+// to  deduce whether or not the value had been encoded before.
+// If it has the gob type definition is returned in position one.
+// Regardless,  the actual encoded value (without typedef bytes)
+// is returned in position two.
 func (f *FilteredEncoder) Encode(e interface{}) ([]byte, []byte, error) {
 	// Empty write buffer and ensure that an encoder is present.
 	f.ready()

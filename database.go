@@ -1,6 +1,6 @@
-// Implements a persistant key-value store of gob-compatible
-// types. This is accomplished with a light wrapper around
-// leveldb and Go's gob encoding library.
+// Package GobDB implements a persistant key-value store of
+// gob-compatible types. This is accomplished with a light
+// wrapper around leveldb and Go's gob encoding library.
 package GobDB
 
 import (
@@ -9,7 +9,8 @@ import (
 	"strconv"
 )
 
-// LevelDB wrapper.
+// DB is a LevelDB wrapper that stores key-value pairs of
+// gob-compatible types.
 type DB struct {
 	internal *leveldb.DB
 	location string
@@ -18,12 +19,12 @@ type DB struct {
 	prepared bool
 }
 
-// Returns unopened database at with given datafile.
+// At returns an unopened database at with given datafile.
 func At(path string) *DB {
 	return &DB{location: path}
 }
 
-// Opens database if not done already.
+// Open sets up the internal leveldb if not done already.
 func (db *DB) Open() error {
 	if db.IsOpen() {
 		return nil
@@ -37,12 +38,13 @@ func (db *DB) Open() error {
 	return err
 }
 
-//
+// IsOpen checks whether or not the database is open.
 func (db DB) IsOpen() bool {
 	return db.internal != nil
 }
 
-// Closes database if not done already.
+// Close tears down the internal leveldb, writing all contents
+// to file.
 func (db *DB) Close() {
 	if db.IsOpen() {
 		db.internal.Close()
@@ -50,7 +52,7 @@ func (db *DB) Close() {
 	}
 }
 
-// Encodes given key and value through gob, inserting resulting
+// Put encodes given key and value through gob, inserting resulting
 // byte slices into the database's internal leveldb.
 func (db *DB) Put(key, value interface{}) error {
 	// Encode key via gob, registering types if necessary.
@@ -73,8 +75,9 @@ func (db *DB) Put(key, value interface{}) error {
 	return db.internal.Put(pkey, val, nil)
 }
 
-// Encodes given key via gob, fetches the corresponding value from
-// within leveldb, and decodes that value into parameter two.
+// Get ncodes given key via gob, fetches the corresponding
+// value from within leveldb, and decodes that value into
+// parameter two.
 func (db *DB) Get(key, value interface{}) error {
 	// Encode key via gob, registering its type if necessary.
 	obj, err := db.encode(key)
@@ -92,12 +95,13 @@ func (db *DB) Get(key, value interface{}) error {
 		return err
 	}
 
-	// Decode value into second paramater (which should be a pointer)
+	// Decode value into second paramater (which should be a
+	// pointer)
 	return db.decoder.Decode(val, value)
 }
 
-// Encodes given key via gob and checks if the resulting byte
-// slice exists in the database's internal leveldb.
+// Has encodes given key via gob and checks if the resulting
+// byte slice exists in the database's internal leveldb.
 func (db DB) Has(key interface{}) bool {
 	// Encode key via gob, registering its type if necessary.
 	obj, err := db.encode(key)
@@ -110,8 +114,8 @@ func (db DB) Has(key interface{}) bool {
 	return err == nil
 }
 
-// Encodes given key via gob, deleting the resulting byte slice
-// from the database's internal leveldb.
+// Delete encodes given key via gob, deleting the resulting
+// byte slice from the database's internal leveldb.
 func (db *DB) Delete(key interface{}) error {
 	// Encode key via gob, registering its type if necessary.
 	obj, err := db.encode(key)
@@ -123,20 +127,20 @@ func (db *DB) Delete(key interface{}) error {
 	return db.internal.Delete(obj, nil)
 }
 
-// Counts key-value pairs in database.
+// Entries counts key-value pairs in the database.
 func (db *DB) Entries() int {
 	i := 0
 	iter := db.internal.NewIterator(util.BytesPrefix([]byte("key:")), nil)
 	for iter.Next() {
-		i += 1
+		i++
 	}
 	iter.Release()
 	return i
 }
 
-// Erases caches and closes leveldb. This way, the db is forced
-// to reload gobbed values as though it had just been opened for
-// the first time.
+// Reset erases caches and closes leveldb. This way, the db
+// is forced to reload gobbed values as though it had just 
+// been opened for the first time.
 func (db *DB) Reset() {
 	db.Close()
 	db.prepared = false
@@ -211,9 +215,8 @@ func (db *DB) incPrepCount(i int) error {
 	size := db.prepCount()
 	if size == -1 {
 		return db.setPrepCount(1)
-	} else {
-		return db.setPrepCount(size + i)
 	}
+	return db.setPrepCount(size + i)
 }
 
 func (db *DB) prepCount() int {

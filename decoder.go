@@ -7,22 +7,23 @@ import (
 	"sync"
 )
 
-// Provides a goroutine-safe method of decoding gobbed objects
-// individually. Assumes that gob type definitions are registered
-// in the necessary order.
+// Decoder provides a goroutine-safe method of decoding gobbed
+// objects individually. Assumes that gob type definitions are
+// registered in the necessary order.
 //
-// NOTE: Decoder pointers to the same address will be forced to use mutex
-// locks when utilized concurrently. On the other hand, if you copy a decoder
-// itself, the two copies may be interacted with concurrently and lock-free.
+// NOTE: Decoder pointers to the same address will be forced to
+// use mutex locks when utilized concurrently. On the other hand,
+// if you copy a decoder itself, the two copies may be interacted
+// with concurrently and lock-free.
 type Decoder struct {
 	decoder *gob.Decoder
 	reader  hookedReader
 	mutex   sync.Mutex
 }
 
-// Attempts to decode the given data, placing results into <address>
-// if no errors occur. New types are registered implicitly, but they
-// must be used in correct order.
+// Decode attempts to decode the given data, placing results
+// into <address> if no errors occur. New types are registered
+// implicitly, but they must be used in correct order.
 func (d *Decoder) Decode(data []byte, address interface{}) error {
 	d.ensureInitialized()
 	d.mutex.Lock()
@@ -32,8 +33,8 @@ func (d *Decoder) Decode(data []byte, address interface{}) error {
 	return d.decoder.Decode(address)
 }
 
-// Informs internal decoder of the given gob type definition and its
-// example object.
+// Register informs internal decoder of the given gob type
+// definition and its example object.
 func (d *Decoder) Register(data []byte) error {
 	d.ensureInitialized()
 	d.mutex.Lock()
