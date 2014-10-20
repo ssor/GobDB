@@ -150,6 +150,30 @@ func (db *DB) Reset() {
 	db.prepared = false
 }
 
+// PutRaw operates identically to the origal leveldb.Put 
+// method. No gob encodings are performed.
+func (db *DB) PutRaw(key, value []byte) error {
+	kbytes := []byte("raw:")
+	kbytes = append(kbytes, key)
+	return db.internal.Put(kbytes, value)
+}	
+
+// GetRaw operates identically to the origal leveldb.Get 
+// method. No gob encodings are performed.
+func (db *DB) GetRaw(key []byte) ([]byte, error) {
+	kbytes := []byte("raw:")
+	kbytes = append(kbytes, key)
+	return db.internal.Get(kbytes)
+}
+
+// DeleteRaw operates identically to the origal leveldb.Delete 
+// method. No gob encodings are performed.
+func (db *DB) DeleteRaw(key []byte) error {
+	kbytes := []byte("raw:")
+	kbytes = append(kbytes, key)
+	return db.internal.Delete(kbytes)
+}
+
 // Encodes given key via gob, registers its type if necessary,
 // and routes any errors outward.
 func (db *DB) encode(key interface{}) ([]byte, error) {
