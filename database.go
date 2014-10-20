@@ -62,7 +62,7 @@ func (db *DB) Put(key, value interface{}) error {
 	}
 
 	// Form prefixed key.
-	pkey := []byte("key:")
+	pkey := []byte("GobDB:key:")
 	pkey = append(pkey, o1...)
 
 	// Encode value via gob, registering types if necessary.
@@ -86,7 +86,7 @@ func (db *DB) Get(key, value interface{}) error {
 	}
 
 	// Form prefixed key.
-	pkey := []byte("key:")
+	pkey := []byte("GobDB:key:")
 	pkey = append(pkey, obj...)
 
 	// Fetch gob-encoded value.
@@ -124,7 +124,7 @@ func (db *DB) Delete(key interface{}) error {
 	}
 
 	// Form key bytes.
-	kbytes := []byte("key:")
+	kbytes := []byte("GobDB:key:")
 	kbytes = append(kbytes, obj...)
 
 	// Delete!
@@ -134,7 +134,7 @@ func (db *DB) Delete(key interface{}) error {
 // Entries counts key-value pairs in the database.
 func (db *DB) Entries() int {
 	i := 0
-	iter := db.internal.NewIterator(util.BytesPrefix([]byte("key:")), nil)
+	iter := db.internal.NewIterator(util.BytesPrefix([]byte("GobDB:key:")), nil)
 	for iter.Next() {
 		i++
 	}
@@ -148,30 +148,6 @@ func (db *DB) Entries() int {
 func (db *DB) Reset() {
 	db.Close()
 	db.prepared = false
-}
-
-// PutRaw operates identically to the origal leveldb.Put 
-// method. No gob encodings are performed.
-func (db *DB) PutRaw(key, value []byte) error {
-	kbytes := []byte("raw:")
-	kbytes = append(kbytes, key...)
-	return db.internal.Put(kbytes, value, nil)
-}	
-
-// GetRaw operates identically to the origal leveldb.Get 
-// method. No gob encodings are performed.
-func (db *DB) GetRaw(key []byte) ([]byte, error) {
-	kbytes := []byte("raw:")
-	kbytes = append(kbytes, key...)
-	return db.internal.Get(kbytes, nil)
-}
-
-// DeleteRaw operates identically to the origal leveldb.Delete 
-// method. No gob encodings are performed.
-func (db *DB) DeleteRaw(key []byte) error {
-	kbytes := []byte("raw:")
-	kbytes = append(kbytes, key...)
-	return db.internal.Delete(kbytes, nil)
 }
 
 // Encodes given key via gob, registers its type if necessary,
@@ -219,7 +195,7 @@ func (db *DB) prepare() error {
 		return nil
 	}
 
-	iter := db.internal.NewIterator(util.BytesPrefix([]byte("prep#")), nil)
+	iter := db.internal.NewIterator(util.BytesPrefix([]byte("GobDB:prep#")), nil)
 	for iter.Next() {
 		value := iter.Value()
 		db.encoder.Encode(value)
@@ -234,7 +210,7 @@ func (db *DB) prepare() error {
 }
 
 func (db *DB) setPrepCount(value int) error {
-	key := []byte("prep-count")
+	key := []byte("GobDB:prep-count")
 	data := []byte(strconv.Itoa(value))
 	return db.internal.Put(key, data, nil)
 }
@@ -253,7 +229,7 @@ func (db *DB) prepCount() int {
 		return -1
 	}
 
-	val, err := db.internal.Get([]byte("prep-count"), nil)
+	val, err := db.internal.Get([]byte("GobDB:prep-count"), nil)
 	if err != nil {
 		return 0
 	}
@@ -268,7 +244,7 @@ func (db *DB) isPresent(def []byte) bool {
 		return false
 	}
 
-	key := []byte("prep:")
+	key := []byte("GobDB:prep:")
 	key = append(key, def...)
 	_, err = db.internal.Get(key, nil)
 	return err == nil
@@ -289,7 +265,7 @@ func (db *DB) registerType(def, obj []byte) error {
 	}
 
 	// Map prep#<n> to type definition bytes.
-	k1 := []byte("prep#" + strconv.Itoa(db.prepCount()))
+	k1 := []byte("GobDB:prep#" + strconv.Itoa(db.prepCount()))
 	err = db.incPrepCount(1)
 	if err != nil {
 		return err
@@ -303,7 +279,7 @@ func (db *DB) registerType(def, obj []byte) error {
 	}
 
 	// Map prep:<def> to empty string (for checking duplicate keys).
-	k2 := []byte("prep:")
+	k2 := []byte("GobDB:prep:")
 	k2 = append(k2, def...)
 	v2 := []byte("")
 	err = db.internal.Put(k2, v2, nil)
