@@ -123,8 +123,12 @@ func (db *DB) Delete(key interface{}) error {
 		return err
 	}
 
+	// Form key bytes.
+	kbytes := []byte("key:")
+	kbytes = append(kbytes, obj...)
+
 	// Delete!
-	return db.internal.Delete(obj, nil)
+	return db.internal.Delete(kbytes, nil)
 }
 
 // Entries counts key-value pairs in the database.
