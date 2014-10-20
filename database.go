@@ -154,24 +154,24 @@ func (db *DB) Reset() {
 // method. No gob encodings are performed.
 func (db *DB) PutRaw(key, value []byte) error {
 	kbytes := []byte("raw:")
-	kbytes = append(kbytes, key)
-	return db.internal.Put(kbytes, value)
+	kbytes = append(kbytes, key...)
+	return db.internal.Put(kbytes, value, nil)
 }	
 
 // GetRaw operates identically to the origal leveldb.Get 
 // method. No gob encodings are performed.
 func (db *DB) GetRaw(key []byte) ([]byte, error) {
 	kbytes := []byte("raw:")
-	kbytes = append(kbytes, key)
-	return db.internal.Get(kbytes)
+	kbytes = append(kbytes, key...)
+	return db.internal.Get(kbytes, nil)
 }
 
 // DeleteRaw operates identically to the origal leveldb.Delete 
 // method. No gob encodings are performed.
 func (db *DB) DeleteRaw(key []byte) error {
 	kbytes := []byte("raw:")
-	kbytes = append(kbytes, key)
-	return db.internal.Delete(kbytes)
+	kbytes = append(kbytes, key...)
+	return db.internal.Delete(kbytes, nil)
 }
 
 // Encodes given key via gob, registers its type if necessary,
