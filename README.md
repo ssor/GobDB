@@ -3,30 +3,33 @@ GobDB is a simple database optimized for convenience in Go. It wraps [leveldb](h
 
 
 
-# Example
+# Sample Usage
+Setup a database and assign a local data file.
 ```
-package main
-import "github.com/dasmithii/GobDB"
+db := GobDB.At("example")
+db.Open()
+```
 
-func main() {
-	// Set up a database and assign it a local data file.
-	db := GobDB.At("example")
-	db.Open()
-	defer db.Close()
+Insert persistently key-value pairs. We use strings here, but all gob-compatible values are supported.
+```
+db.Put("name", "adam")
+```
 
-	// Insert persistently-stored key-value pairs. We use strings
-	// here, but all gob-compatible values are supported.
-	db.Put("name", "adam")
+Fetch values of key-value pairs. Note that you must provide a pointer of the correct type. 
+```
+var value string = ""
+db.Get("name", &value)
+```
 
-	// Fetch values of key-value pairs. Note that you must provide
-	// a pointer of the correct type. 
-	var value string = ""
-	db.Get("name", &value)
+Check if keys are contained within the database.
+```
+db.Has("name")
+db.Has("3234") 
+```
 
-	// Check if keys are contained within the database.
-	db.Has("name") // => true
-	db.Has("3234") // => false
-}
+Close the database and write changes to disk.
+```
+db.Close()
 ```
 
 
