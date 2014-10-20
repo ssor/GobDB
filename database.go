@@ -169,6 +169,19 @@ func (db *DB) Internal() *leveldb.DB {
 	return db.internal
 }
 
+// Compact performs leveldb.CompactRange on the range of 
+// key-value mappings maintained by GobDB. Pairs outside
+// the 'GobDB:' prefix aren't affected.
+func (db *DB) Compact() error {
+	err := db.Open()
+	if err != nil {
+		return err
+	}
+	
+	prefix := util.BytesPrefix([]byte("GobDB:"))
+	return db.internal.CompactRange(*prefix)
+}
+
 // Encodes given key via gob, registers its type if necessary,
 // and routes any errors outward.
 func (db *DB) encode(key interface{}) ([]byte, error) {
