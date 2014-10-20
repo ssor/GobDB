@@ -47,10 +47,9 @@ func (d *Decoder) Register(data []byte) error {
 // Makes sure that a gob decoder has been set up with the correct
 // reader.
 func (d *Decoder) ensureInitialized() {
-	reader := makeAtomicReader()
 	if d.decoder == nil {
-		d.reader = reader
-		d.decoder = gob.NewDecoder(reader)
+		d.reader = makeAtomicReader()
+		d.decoder = gob.NewDecoder(d.reader)
 	}
 }
 
