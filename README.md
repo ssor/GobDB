@@ -12,15 +12,41 @@ GobDB 是一个为了方便在 Go 开发中的数据存储而开发的微型数�
 > * 数据量不多，对性能要求不高
 
 # Sample Usage
+
+Default db file path 
+```
+./gobdb
+```
+
+If we define a struct like this:
+```
+type ExampleThing struct {
+	Name string
+	Age  int
+}
+
+func NewExample(name string, age int) *ExampleThing {
+	return &ExampleThing{
+		Name: name,
+		Age:  age,
+	}
+}
+```
+
 Setup a database and assign a local data file.
 ```
-db := GobDB.New("example").Init()
+var dbExample = "example"
+
+db := NewDB(dbExample, func() interface{} {
+		var exmaple ExampleThing
+		return &exmaple // We do this for Get the right Type later
+	}).Init()
 
 ```
 
 Insert persistently key-value pairs. We use strings here, but all gob-compatible values are supported.
 ```
-db.Put("name", "adam")
+db.Put("name", NewExample("first", 1))
 ```
 
 Fetch values of key-value pairs. Note that you will get the correct type. 
@@ -47,6 +73,8 @@ You needn't close it,as it will save your change when you do that.
 go get github.com/ssor/GobDB
 go test github.com/ssor/GobDB
 ```
+#应用的项目
+1. [WebGIS](https://github.com/ssor/webgisGo)
 
 #welcome pull request
 欢迎一起开发，pull request me
