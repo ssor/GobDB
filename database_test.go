@@ -3,14 +3,16 @@ package GobDB
 import (
 	"fmt"
 	// "io/ioutil"
-	"github.com/ungerik/go-dry"
+	// "github.com/ungerik/go-dry"
 	"os"
 	"testing"
 	// "path/filepath"
 )
 
 var dbRootPath = "./gobdb"
-var dbPath = dbRootPath + "/example"
+
+// var dbPath = dbRootPath + "/example"
+var dbExample = "example"
 
 func TestInit(t *testing.T) {
 	//clear env
@@ -20,12 +22,12 @@ func TestInit(t *testing.T) {
 	clearEnv()
 	defer clearEnv()
 
-	_, err := NewDB(dbPath, nil).Init()
+	_, err := NewDB(dbExample, nil).Init()
 	if err != nil {
 		t.Log(err)
 		t.FailNow()
 	}
-	db, err := NewDB(dbPath, nil).Init()
+	db, err := NewDB(dbExample, nil).Init()
 	if err != nil {
 		t.Log(err)
 		t.FailNow()
@@ -58,7 +60,7 @@ func TestStructs(t *testing.T) {
 	defer clearEnv()
 
 	//create db
-	db, _ := NewDB(dbPath, nil).Init()
+	db, _ := NewDB(dbExample, nil).Init()
 	err := db.Put("first", NewExample("first", 1))
 	if err != nil {
 		t.Log(err)
@@ -69,7 +71,7 @@ func TestStructs(t *testing.T) {
 		t.FailNow()
 	}
 	//test if file created
-	if dry.FileExists(dbPath+"/"+"first") == false {
+	if db.DB_FileExists("first") == false {
 		t.Log("file not exists")
 		t.FailNow()
 	}
@@ -80,7 +82,7 @@ func TestStructs(t *testing.T) {
 	}
 
 	// reload db
-	db2, err := NewDB(dbPath, func() interface{} {
+	db2, err := NewDB(dbExample, func() interface{} {
 		var exmaple ExampleThing
 		return &exmaple
 	}).Init()
@@ -118,7 +120,7 @@ func TestStructs(t *testing.T) {
 		t.Log("records count should be 1")
 		t.FailNow()
 	}
-	if dry.FileExists(dbPath+"/"+"first") == true {
+	if db2.DB_FileExists("first") == true {
 		t.Log("file should not exists")
 		t.FailNow()
 	}

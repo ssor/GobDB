@@ -10,11 +10,28 @@ import (
 	"errors"
 	"github.com/ungerik/go-dry"
 	"os"
+	"path"
 	// "strconv"
-	// "fmt"
+	"fmt"
 )
 
-func NewDB(path string, objPrototypeGenerator func() interface{}) *DB {
+var g_debug = false
+
+func debugOutput(args ...interface{}) {
+	if g_debug {
+		fmt.Println(args)
+	}
+}
+
+// db path should like ./gobdb/people  , people is a folder which folds a list of people record
+var default_db_root_path = "./gobdb"
+
+func NewDB(name string, objPrototypeGenerator func() interface{}) *DB {
+	if len(name) <= 0 {
+		name = "demo"
+	}
+
+	location := path.Join(default_db_root_path, name)
 	if objPrototypeGenerator == nil {
 		// set a default string generator
 		objPrototypeGenerator = func() interface{} {
@@ -23,35 +40,26 @@ func NewDB(path string, objPrototypeGenerator func() interface{}) *DB {
 		}
 	}
 	db := &DB{
-		location:           path,
-		Name:               path,
-		objectIndex:        make(map[string]interface{}),
+		location:           location,
+		Name:               name,
+		ObjectsMap:         make(map[string]interface{}),
 		prototypeGenerator: objPrototypeGenerator,
 	}
 	return db
 }
 
-// db path should like ./gobdb/people  , people is a folder which folds a list of people record
-
-// var default_db_path = "./gobdb/"
-
-// DB is a LevelDB wrapper that stores key-value pairs of
-// gob-compatible types.
 type DB struct {
 	location           string
 	Name               string
-	objectIndex        map[string]interface{}
+	ObjectsMap         map[string]interface{}
 	prototypeGenerator func() interface{}
 }
 
 //mkdir for db, read data if db already exits
 func (db *DB) Init() (*DB, error) {
-	// if dry.FileExists(default_db_path) == false || dry.FileIsDir(default_db_path) == false { //may be it's a file
-	// 	if err := os.Mkdir(default_db_path, os.O_CREATE); err != nil {
-	// 		return err
-	// 	}
-	// }
+	// debugOutput("db location => ", db.location)
 	if dry.FileExists(db.location) == false || dry.FileIsDir(db.location) == false {
+		// debugOutput("location not exists: ", db.location)
 		if err := os.MkdirAll(db.location, os.ModePerm); err != nil {
 			return nil, err
 		}
@@ -61,15 +69,16 @@ func (db *DB) Init() (*DB, error) {
 	if files, err := dry.ListDirFiles(db.location); err != nil {
 		return nil, err
 	} else {
-		dry.StringEach(func(file string) error {
-			filePath := db.location + "/" + file
+		// debugOutput("files: ", files)
+		dry.StringEachMust(func(file string) {
+			filePath := path.Join(db.location, file)
 			obj := db.prototypeGenerator()
 			if err := readFile(filePath, obj); err != nil {
-				return err
+				return
 			}
-			// fmt.Println("load file ", file, " ", obj)
-			db.objectIndex[file] = obj
-			return nil
+			// debugOutput("gobdb => load file ", file, " ", obj)
+			db.ObjectsMap[file] = obj
+
 		}, files)
 	}
 	return db, nil
@@ -95,7 +104,7 @@ func readFile(path string, obj interface{}) error {
 
 // Put encodes given key and value through gob
 func (db *DB) Put(key string, value interface{}) error {
-	filePath := db.location + "/" + key
+	filePath := path.Join(db.location, key)
 	if dry.FileExists(filePath) == true {
 		return errors.New("file already exists")
 	}
@@ -108,7 +117,7 @@ func (db *DB) Put(key string, value interface{}) error {
 	if err != nil {
 		return err
 	}
-	db.objectIndex[key] = value
+	db.ObjectsMap[key] = value
 	return nil
 }
 
@@ -116,8 +125,8 @@ func (db *DB) Put(key string, value interface{}) error {
 // value from within leveldb, and decodes that value into
 // parameter two.
 func (db *DB) Get(key string) interface{} {
-	if _, ok := db.objectIndex[key]; ok {
-		return db.objectIndex[key]
+	if _, ok := db.ObjectsMap[key]; ok {
+		return db.ObjectsMap[key]
 	} else {
 		return nil
 	}
@@ -125,8 +134,8 @@ func (db *DB) Get(key string) interface{} {
 
 // Has encodes given key via gob and checks if the resulting
 // byte slice exists in the database's internal leveldb.
-func (db DB) Has(key string) bool {
-	_, ok := db.objectIndex[key]
+func (db *DB) Has(key string) bool {
+	_, ok := db.ObjectsMap[key]
 	return ok
 }
 
@@ -134,10 +143,10 @@ func (db DB) Has(key string) bool {
 // byte slice from the database's internal leveldb.
 func (db *DB) Delete(key string) error {
 	if db.Has(key) == true {
-		if err := os.Remove(db.location + "/" + key); err != nil {
+		if err := os.Remove(path.Join(db.location, key)); err != nil {
 			return err
 		}
-		delete(db.objectIndex, key)
+		delete(db.ObjectsMap, key)
 	}
 	return nil
 }
@@ -145,5 +154,10 @@ func (db *DB) Delete(key string) error {
 // Entries counts key-value pairs in the database. This
 // includes only pairs written through GobDB.Put.
 func (db *DB) Count() int {
-	return len(db.objectIndex)
+	return len(db.ObjectsMap)
+}
+
+func (db *DB) DB_FileExists(name string) bool {
+	filePath := path.Join(db.location, name)
+	return dry.FileExists(filePath)
 }
