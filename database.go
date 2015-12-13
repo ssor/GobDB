@@ -102,6 +102,15 @@ func readFile(path string, obj interface{}) error {
 	return nil
 }
 
+//if exists, delete, and create new file
+func (db *DB) Update(key string, value interface{}) error {
+	err := db.Delete(key)
+	if err != nil {
+		return err
+	}
+	return db.Put(key, value)
+}
+
 // Put encodes given key and value through gob
 func (db *DB) Put(key string, value interface{}) error {
 	filePath := path.Join(db.location, key)
@@ -143,7 +152,11 @@ func (db *DB) Has(key string) bool {
 // byte slice from the database's internal leveldb.
 func (db *DB) Delete(key string) error {
 	if db.Has(key) == true {
-		if err := os.Remove(path.Join(db.location, key)); err != nil {
+		dbFilePath := path.Join(db.location, key)
+		if dry.FileExists(dbFilePath) == false {
+			return nil
+		}
+		if err := os.Remove(dbFilePath); err != nil {
 			return err
 		}
 		delete(db.ObjectsMap, key)
